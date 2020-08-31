@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <style type="text/css">
+        body { margin: 0 }
+    </style>
+    <title>Collision</title>
+</head>
+
+<body>
+<script src="../scripts/cannon.js"></script>
+<script type="module">
+  import * as THREE from 'https://unpkg.com/three@0.119.1/build/three.module.js';
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 20, 30);
+  camera.lookAt(new THREE.Vector3(0,0,0));
+
+  const renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  //World
+
+  const world = new CANNON.World();
+  world.gravity.set(0, -9.8, 0); // m/s²
+
+
+
+  //Mesh
+
+  const sphereStartPosition = [10,2,10];
+
+  //Vizualization
+  const geometry = new THREE.SphereGeometry(2, 32, 32);
+  const texture = new THREE.TextureLoader().load('../textures/pattern-scottish-tartan.jpg');
+  const material = new THREE.MeshPhongMaterial({color: '#cc182a', map: texture});
+
+  const sphere = new THREE.Mesh(geometry, material);
+  sphere.position.set(...sphereStartPosition);
+  sphere.name = 'sphere';
+
+  scene.add(sphere);
+
+  //Body
+
+  const sphereBody = new CANNON.Body({
+    mass: 200,
+    shape: new CANNON.Sphere(2),
+  });
+  sphereBody.position.set(...sphereStartPosition);
+  sphereBody.name = 'sphere';
+  world.addBody(sphereBody);
+
+  //Ground
+
+  const quaternion = new THREE.Quaternion();
+  quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), -Math.PI/2 );
+  const { x,y,z,w } = quaternion;
+
+  //Vizualization
+  var groundGeometry = new THREE.PlaneGeometry( 100, 50 );
+  var groundMaterial = new THREE.MeshBasicMaterial( {color: '#ced6d0', side: THREE.DoubleSide} );
+  var ground = new THREE.Mesh( groundGeometry, groundMaterial );
+  ground.quaternion.set(x,y,z,w);
+  scene.add(ground);
+
+  //Body
+  var groundBody = new CANNON.Body({
+    mass: 0,
+    shape: new CANNON.Plane(),
+    position: new CANNON.Vec3(0, 0, 0)
+  });
+  groundBody.quaternion.set(x,y,z,w);
+  world.addBody(groundBody);
+
+  //Box
+
+  //Vizualization
+  const boxGeometry = new THREE.BoxGeometry(2, 5, 10);
+  const box = new THREE.Mesh(boxGeometry, new THREE.MeshPhongMaterial({color: '#77bf19' }));
+  box.position.set(-10,2.5,5);
+  box.name = 'box';
+  scene.add(box);
+
+  //Body
+  const boxBody = new CANNON.Body({
+    mass: 50,
+    shape: new CANNON.Box(new CANNON.Vec3(1, 2.5, 5)),
+    position: new CANNON.Vec3(-10,2.5,5)
+  });
+  boxBody.name = 'box';
+  world.addBody(boxBody);
+
+  //Light
+
+  const light = new THREE.DirectionalLight('white', 0.6);
+  light.position.set(12,24,2);
+  scene.add(light);
+
+  const additionalLight = new THREE.AmbientLight('white', 0.3);
+  scene.add(additionalLight);
+
+  //Picking object
+
+  const raycaster = new THREE.Raycaster();
+
+  function onClick(e) {
+    // calculate mouse position in normalized device coordinates
+    // (-1 to +1) for both components
+    const x = ( e.clientX / window.innerWidth ) * 2 - 1;
+    const y = -( e.clientY / window.innerHeight ) * 2 + 1;
+
+    raycaster.setFromCamera( new THREE.Vector2(x, y), camera );
+    var intersects = raycaster.intersectObjects( scene.children );
+
+    if (intersects.length) {
+      const { object } = intersects[0];
+      const body = world.bodies.find(obj => obj.name === object.name);
+      if (!body) {
+        return;
+      }
+      const impulse = new CANNON.Vec3(-1500,30,30);
+      body.applyLocalImpulse(impulse, new CANNON.Vec3());
+    }
+  }
+
+  window.addEventListener('click', onClick);
+
+  // Render
+
+  const animate = function () {
+    requestAnimationFrame( animate );
+
+    world.step(1 / 60);
+
+    const spherePos = sphereBody.position;
+    sphere.position.set(spherePos.x, spherePos.y, spherePos.z);
+
+    const sphereQ = sphereBody.quaternion;
+    sphere.quaternion.set(sphereQ.x, sphereQ.y, sphereQ.z, sphereQ.w);
+
+    const boxPos = boxBody.position;
+    box.position.set(boxPos.x, boxPos.y, boxPos.z);
+
+    const boxQ = boxBody.quaternion;
+    box.quaternion.set(boxQ.x, boxQ.y, boxQ.z, boxQ.w);
+
+    renderer.render( scene, camera );
+  };
+
+  animate();
+
+</script>
+</body>
+
+</html>

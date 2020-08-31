@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <style type="text/css">
+        body { margin: 0 }
+    </style>
+    <title>Plane</title>
+</head>
+
+<body>
+<script type="module">
+  import * as THREE from 'https://unpkg.com/three@0.119.1/build/three.module.js';
+
+  const scene = new THREE.Scene();
+
+  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 10, 30);
+
+  const renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  //Mesh
+
+  const geometry = new THREE.SphereGeometry(2, 32, 32);
+  const material = new THREE.MeshPhongMaterial({color: '#cc182a'});
+
+  const sphere = new THREE.Mesh(geometry, material);
+  sphere.position.set(0, 20, 0);
+
+  scene.add(sphere);
+
+  //Plane
+
+  const quaternion = new THREE.Quaternion();
+  quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), -Math.PI/2 );
+  const { x,y,z,w } = quaternion;
+
+  const groundGeometry = new THREE.PlaneGeometry( 100, 50 );
+  const groundMaterial = new THREE.MeshBasicMaterial( {color: '#ced6d0'} );
+  const ground = new THREE.Mesh( groundGeometry, groundMaterial );
+  ground.quaternion.set(x,y,z,w);
+  scene.add( ground );
+
+  //Light
+
+  const light = new THREE.DirectionalLight('white', 1);
+  light.position.set(12, 12, 12);
+  scene.add(light);
+
+  const additionalLight = new THREE.AmbientLight('white', 0.2);
+  scene.add(additionalLight);
+
+  // Render
+
+  const animate = function () {
+    requestAnimationFrame( animate );
+
+    sphere.position.y -= 0.04;
+
+    renderer.render( scene, camera );
+  };
+
+  animate();
+
+</script>
+</body>
+
+</html>

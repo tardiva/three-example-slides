@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <style type="text/css">
+        body { margin: 0 }
+    </style>
+    <title>Gravity</title>
+</head>
+
+<body>
+<script src="../scripts/cannon.js"></script>
+<script type="module">
+  import * as THREE from 'https://unpkg.com/three@0.119.1/build/three.module.js';
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 10, 30);
+
+  const renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  //World
+
+  const world = new CANNON.World();
+  world.gravity.set(0, -9.8, 0);
+
+  //Mesh
+
+  const sphereStartPosition = [0,20,0];
+
+  //Vizualization
+  const geometry = new THREE.SphereGeometry(2, 32, 32);
+  const material = new THREE.MeshPhongMaterial({color: '#cc182a'});
+
+  const sphere = new THREE.Mesh(geometry, material);
+  sphere.position.set(...sphereStartPosition);
+
+  scene.add(sphere);
+
+  //Body
+
+  const sphereBody = new CANNON.Body({
+    mass: 20,
+    shape: new CANNON.Sphere(2),
+  });
+  sphereBody.position.set(...sphereStartPosition);
+  sphereBody.linearDamping = 0;
+  world.addBody(sphereBody);
+
+  //Ground
+
+  const quaternion = new THREE.Quaternion();
+  quaternion.setFromAxisAngle( new THREE.Vector3( 1, 0, 0 ), -Math.PI/2 );
+  const { x,y,z,w } = quaternion;
+
+  //Vizualization
+  var groundGeometry = new THREE.PlaneGeometry( 100, 50 );
+  var groundMaterial = new THREE.MeshBasicMaterial( {color: '#ced6d0', side: THREE.DoubleSide} );
+  var ground = new THREE.Mesh( groundGeometry, groundMaterial );
+  ground.quaternion.set(x,y,z,w);
+  scene.add(ground);
+
+  //Body
+  var groundBody = new CANNON.Body({
+    mass: 0,
+    shape: new CANNON.Plane(),
+    position: new CANNON.Vec3(0, 0, 0)
+  });
+  groundBody.quaternion.set(x,y,z,w);
+  world.addBody(groundBody);
+
+  //Light
+
+  const light = new THREE.DirectionalLight('white', 1);
+  light.position.set(12, 12, 12);
+  scene.add(light);
+
+  const additionalLight = new THREE.AmbientLight('white', 0.2);
+  scene.add(additionalLight);
+
+  // Render
+
+  const animate = function () {
+    requestAnimationFrame( animate );
+
+    world.step(1 / 60);
+
+    const {x, y, z} = sphereBody.position;
+
+    sphere.position.set(x, y, z);
+
+    renderer.render( scene, camera );
+  };
+
+  animate();
+
+</script>
+</body>
+
+</html>

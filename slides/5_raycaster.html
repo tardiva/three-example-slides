@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <style type="text/css">
+        body { margin: 0 }
+    </style>
+    <title>Picking</title>
+</head>
+
+<body>
+<script type="module">
+  import * as THREE from 'https://unpkg.com/three@0.119.1/build/three.module.js';
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.set(0, 0, 10);
+
+  const renderer = new THREE.WebGLRenderer();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  //Mesh
+
+  const geometry = new THREE.SphereGeometry(2, 32, 32);
+  const material = new THREE.MeshPhongMaterial({color: '#cc182a'});
+
+  const sphere = new THREE.Mesh(geometry, material);
+  sphere.position.set(0, 0, 0);
+
+  scene.add(sphere);
+
+  //Light
+
+  const light = new THREE.DirectionalLight('white', 1);
+  light.position.set(12, 12, 12);
+  scene.add(light);
+
+  const additionalLight = new THREE.AmbientLight('white', 0.2);
+  scene.add(additionalLight);
+
+  renderer.render(scene, camera);
+
+  //Picking object
+
+  const raycaster = new THREE.Raycaster();
+
+  function onClick(e) {
+    // calculate mouse position in normalized device coordinates
+    // (-1 to +1) for both components
+    const x = ( e.clientX / window.innerWidth ) * 2 - 1;
+    const y = -( e.clientY / window.innerHeight ) * 2 + 1;
+    console.log(x, y);
+
+    raycaster.setFromCamera( new THREE.Vector2(x, y), camera );
+    var intersects = raycaster.intersectObjects( scene.children );
+
+    if (intersects.length) {
+      const { object } = intersects[0];
+      object.material.color.set('#6919bf');
+      renderer.render(scene, camera);
+    }
+  }
+
+  window.addEventListener('click', onClick);
+
+</script>
+</body>
+
+</html>
